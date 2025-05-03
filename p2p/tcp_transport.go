@@ -3,7 +3,6 @@ package p2p
 import (
 	"fmt"
 	"net"
-	"sync"
 )
 
 type TCPPeer struct {
@@ -19,6 +18,10 @@ func NewTCPPeer(conn net.Conn, outbound bool) *TCPPeer {
 	}
 }
 
+func (t *TCPPeer) Close() error {
+	return t.conn.Close()
+}
+
 type TCPTransportOpts struct {
 	HandshakeFunc HandshakeFunc
 	ListenAddress string
@@ -29,8 +32,7 @@ type TCPTransport struct {
 	TCPTransportOpts
 	listener      net.Listener
 
-	mu            sync.RWMutex
-	peers         map[net.Addr]Peer
+	consumeChan   chan Message
 }
 
 func NewTCPTransport(opts TCPTransportOpts) *TCPTransport {
@@ -74,7 +76,7 @@ func (t *TCPTransport) handleConn(conn net.Conn) {
 
 	if err := t.HandshakeFunc(peer); err != nil {
 		fmt.Println("TCPTransport: Shake hands error:", err)
-
+		return
 	}
 
 	msg := &Message{}
@@ -86,9 +88,11 @@ func (t *TCPTransport) handleConn(conn net.Conn) {
 		}
 
 		msg.From = conn.RemoteAddr()
+		t.consumeChan <- *msg
 
 		fmt.Printf("TCPTransport: Decoded message: %+v\n", msg)
 	}
 }
+
 
  

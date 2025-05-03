@@ -2,12 +2,13 @@ package p2p
 
 
 type Peer interface {
+	Close() error
 }
 
 
 type Transport interface {
 	ListenAndAccept() error
-	// Connect(ctx context.Context, addr string) error
+	Consume() <-chan Message
 }
 
 

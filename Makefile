@@ -6,4 +6,4 @@ run:
 .PHONY: test
 
 test:
-	go test -v ./p2p
+	go test -v .
