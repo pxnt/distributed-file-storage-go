@@ -42,7 +42,7 @@ func TestStore(t *testing.T) {
 
 	data := bytes.NewReader([]byte(TEST_FILE_CONTENT))
 
-	err := store.WriteStream(TEST_FOLDER, data)
+	_, err := store.WriteStream(TEST_FOLDER, data)
 
 	if err != nil {
 		t.Fatalf("Failed to write stream: %v", err)
