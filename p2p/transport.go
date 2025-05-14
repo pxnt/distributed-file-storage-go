@@ -1,14 +1,13 @@
 package p2p
 
-
-type Peer interface {
-	Close() error
-}
-
+import (
+	"dfs/domain"
+)
 
 type Transport interface {
+	ListenerAddress() string
+	Dial(addr string) error
 	ListenAndAccept() error
-	Consume() <-chan Message
+	Consume() <-chan domain.Message
+	Close() error
 }
-
-

@@ -34,6 +34,12 @@ func TestStore(t *testing.T) {
 	store := NewStore(storeOpts)
 	defer teardown(t, store)
 
+	type A struct {
+		Q int
+		S string
+		E []int
+	}
+
 	data := bytes.NewReader([]byte(TEST_FILE_CONTENT))
 
 	err := store.WriteStream(TEST_FOLDER, data)

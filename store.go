@@ -5,8 +5,8 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"io"
-	"log"
 	"os"
 	"path"
 	"strings"
@@ -73,17 +73,21 @@ type Store struct {
 }
 
 func NewStore(opts StoreOpts) *Store {
+	if opts.Root == "" {
+		opts.Root = DEFAULT_ROOT_FOLDER
+	}
+
 	return &Store{
 		StoreOpts: opts,
 	}
 }
 
-func (s *Store) WriteStream(key string, r io.Reader) error {
+func (s *Store) WriteStream(key string, r io.Reader) (int64, error) {
 	location := s.PathTransformFunc(key)
 	dirWithRoot := path.Join(s.Root, location.Path)
 
 	if err := os.MkdirAll(dirWithRoot, os.ModePerm); err != nil {
-		return err
+		return 0, err
 	}
 
 	fullPath := location.FullPath()
@@ -91,18 +95,18 @@ func (s *Store) WriteStream(key string, r io.Reader) error {
 
 	f, err := os.Create(fullPathWithRoot)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	defer f.Close()
 
 	n, err := io.Copy(f, r)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	log.Printf("Wrote %d bytes to %s\n", n, fullPathWithRoot)
+	fmt.Printf("[Store]: [%s] -> Wrote %d bytes\n", s.Root, n)
 
-	return nil
+	return n, nil
 }
 
 func (s *Store) ReadStream(key string) (io.Reader, error) {
@@ -126,7 +130,7 @@ func (s *Store) Delete(key string) error {
 	location := s.PathTransformFunc(key)
 
 	defer func() {
-		log.Printf("Deleted %s", key)
+		fmt.Printf("Deleted %s", key)
 	}()
 
 	return os.RemoveAll(location.FirstPathName())
@@ -134,7 +138,7 @@ func (s *Store) Delete(key string) error {
 
 func (s *Store) Clear() error {
 	defer func() {
-		log.Printf("Deleted Root %s", s.Root)
+		fmt.Printf("Deleted Root %s", s.Root)
 	}()
 
 	return os.RemoveAll(s.Root)
@@ -146,5 +150,5 @@ func (s *Store) Has(key string) bool {
 
 	_, err := os.Stat(fullPathWithRoot)
 
-	return errors.Is(err, os.ErrNotExist)
+	return !errors.Is(err, os.ErrNotExist)
 }
